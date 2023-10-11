@@ -6,6 +6,7 @@
 - Custom script to run after backup and restore
 - Dry mode for safety debugging
 - Seamless transition to new boot image on SD Card after backup/restore
+- Initramfs shell is available if you have serial connection
 
 ## Read this if this is your first time
 1. Download [lastest release](https://github.com/archandanime/wcv3_flasher-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
