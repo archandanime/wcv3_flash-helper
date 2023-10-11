@@ -1,0 +1,321 @@
+#!/bin/sh
+#
+#Config file format:
+#
+#backup_partitions="no"
+#restore_partitions="yes"
+#
+#continue_boot_img_filename="factory_t31_ZMC6tiIDQN_backup"
+#
+#kernel_filename="mtdblock1_kernel"
+#rootfs_filename="mtdblock2_rootfs"
+#app_filename="mtdblock3_app"
+#kback_filename="mtdblock4_kback"
+#aback_filename="mtdblock5_aback"
+#cfg_filename="mtdblock6_cfg"
+#para_filename="mtdblock7_para"
+#
+#restore_kernel="yes"
+#restore_rootfs="yes"
+#restore_app="yes"
+#restore_kback="no"
+#restore_aback="yes"
+#restore_cfg="no"
+#restore_para="no"
+#
+#custom_script="/path-to/my_init_script.sh"
+#
+#
+
+exec > /tmp/initramfs.log 2>&1
+
+
+mount -t devtmpfs devtmpfs /dev
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+
+sleep 1
+
+##### INITIALIZE GPIO FOR LEDS #####
+if ! [ -d /sys/class/gpio/gpio38 ]; then
+	echo 38 > /sys/class/gpio/export
+	echo out > /sys/class/gpio/gpio38/direction
+	echo 1 > /sys/class/gpio/gpio38/value
+fi
+
+if ! [ -d /sys/class/gpio/gpio39 ]; then
+	echo 39 > /sys/class/gpio/export
+	echo out > /sys/class/gpio/gpio39/direction
+	echo 1 > /sys/class/gpio/gpio39/value
+fi
+
+
+mkdir /sdcard
+mount -t vfat /dev/mmcblk0p1 /sdcard -o rw,umask=0000,dmask=0000
+
+
+function get_mtd() {
+	case "$1" in
+		"kernel" )
+			echo -n "/dev/mtd1" ;;
+		"rootfs" )
+			echo -n "/dev/mtd2" ;;
+		"app" )
+			echo -n "/dev/mtd3" ;;
+		"kback" )
+			echo -n "/dev/mtd4" ;;
+		"aback" )
+			echo -n "/dev/mtd5" ;;
+		"cfg" )
+			echo -n "/dev/mtd6" ;;
+		"para" )
+			echo -n "/dev/mtd7" ;;
+	esac
+}
+
+function get_mtdblock() {
+	case "$1" in
+		"kernel" )
+			echo -n "/dev/mtdblock1" ;;
+		"rootfs" )
+			echo -n "/dev/mtdblock2" ;;
+		"app" )
+			echo -n "/dev/mtdblock3" ;;
+		"kback" )
+			echo -n "/dev/mtdblock4" ;;
+		"aback" )
+			echo -n "/dev/mtdblock5" ;;
+		"cfg" )
+			echo -n "/dev/mtdblock6" ;;
+		"para" )
+			echo -n "/dev/mtdblock7" ;;
+	esac
+}
+
+function get_filename() {
+	case "$1" in
+		"kernel" )
+			echo -n "$kernel_filename" ;;
+		"rootfs" )
+			echo -n "$rootfs_filename" ;;
+		"app" )
+			echo -n "$app_filename" ;;
+		"kback" )
+			echo -n "$kback_filename" ;;
+		"aback" )
+			echo -n "$aback_filename" ;;
+		"cfg" )
+			echo -n "$cfg_filename" ;;
+		"para" )
+			echo -n "$para_filename" ;;
+	esac
+}
+
+function get_restore_opt_value() {
+	case "$1" in
+		"kernel" )
+			echo -n "$restore_kernel" ;;
+		"rootfs" )
+			echo -n "$restore_rootfs" ;;
+		"app" )
+			echo -n "$restore_app" ;;
+		"kback" )
+			echo -n "$restore_kback" ;;
+		"aback" )
+			echo -n "$restore_aback" ;;
+		"cfg" )
+			echo -n "$restore_cfg" ;;
+		"para" )
+			echo -n "$restore_para" ;;
+	esac
+}
+
+function restore_file_to_partition() {
+# Syntax: restore_file_to_partition <file> <mtd>
+	local restore_file="$1"
+	local mtd="$2"
+
+	[[ ! -f $restore_file ]] && { echo " + $restore_file is missing" ; return 1 ; }
+	if [[ "$dry_run" == "yes" ]]; then
+		echo -n " + Checking md5 of $restore_file: "
+		md5sum -c $restore_file.md5sum && echo " + (this command is not run) flashcp $restore_file $mtd"
+	else
+		echo -n " + Checking md5 of $restore_file: "
+		md5sum -c $restore_file.md5sum && flashcp $restore_file $mtd || { echo " + md5 checksum for $restore_file failed" ; return 1 ; }
+	fi
+}
+
+
+function backup_partion_to_file() {
+# Syntax: backup_partion_to_file <mtdblock> <file>
+	local mtdblock="$1"
+	local backup_file="$2"
+
+	if [[ ! -f $backup_file ]]; then
+		echo " + Making backup for $partition partition"
+		if [[ "$dry_run" == "yes" ]]; then
+			echo " + (this command is not run) dd if=$mtdblock of=$backup_file"
+			echo " + (this command is not run) md5sum $backup_file > $backup_file.md5sum"
+			
+		else
+			dd if=$mtdblock of=$backup_file || { echo " + Failed to back up $mtdblock" ; return 1 ; }
+			md5sum $backup_file > $backup_file.md5sum
+		fi
+	else
+		echo "$backup_file file already exists"
+	fi
+}
+
+function exit_init() {
+# Syntax: exit_init <failed/succeeded>
+	case "$1" in
+		"failed")
+			echo "Renaming /sdcard/factory_t31_ZMC6tiIDQN to /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.failed"
+			mv /sdcard/factory_t31_ZMC6tiIDQN /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.failed
+			;;
+		"succeeded")
+			echo "Renaming /sdcard/factory_t31_ZMC6tiIDQN to /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.succeeded"
+			mv /sdcard/factory_t31_ZMC6tiIDQN /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.succeeded
+			;;
+	esac
+
+	if [[ -f /sdcard/$continue_boot_img_filename ]]; then
+		echo "Renaming /sdcard/$continue_boot_img_filename to /sdcard/factory_t31_ZMC6tiIDQN"
+		mv /sdcard/$continue_boot_img_filename /sdcard/factory_t31_ZMC6tiIDQN
+	else
+		echo "/sdcard/$continue_boot_img_filename file is missing"
+	fi
+	
+	echo
+	echo "Initramfs init is finished! Exiting now"
+	[[ -f /tmp/initramfs.log ]] && cp /tmp/initramfs.log $log_file
+	sync
+	umount /sdcard
+	sleep 1
+	exit # Force a reboot by crashing init
+}
+
+
+
+
+installer_name="wcv3_flash-helper"
+backup_dirname="wcv3_flash-helper_backup"
+restore_dirname="wcv3_flash-helper_restore"
+config_file="/sdcard/wcv3_flash-helper.conf"
+log_file="/sdcard/wcv3_flash-helper.log"
+
+
+##### DEBUG #####
+echo
+echo
+echo "Press any key to interupt init" > /dev/console
+echo
+echo
+exec 0< /dev/console
+read -r -s -n 1 -t 3
+if [[ "$?" -eq 0 ]]; then
+	echo "Dropping a shell"
+	exec 1> /dev/console
+	exec 2> /dev/console
+	exec /bin/sh
+fi
+echo "Selection has timed out" > /dev/console
+echo
+echo
+echo
+echo "Welcome to $installer_name!"
+
+
+##### CHECK FOR ERRORS #####
+if [[ ! -f $config_file ]]; then
+	{ echo "$config_file file is missing" ; exit_init failed ; }
+else
+	echo "$config_file file is found"
+fi
+
+dos2unix $config_file
+source $config_file || { echo "$config_file file is invalid" ; exit_init failed ; }
+
+
+##### BACKUP #####
+echo
+echo
+if [[ "${backup_partitions}" == "yes" ]]; then
+	echo "backup_partitions value is Yes"
+	/blink_blue_led.sh &
+	blue_led_pid="$!"
+	echo
+	echo "---------- Begin of backup operations ----------"
+	for partition in kernel rootfs app kback aback cfg para; do
+		[[ ! -d /sdcard/$backup_dirname ]] && mkdir /sdcard/$backup_dirname
+		filename=$(get_filename $partition)
+		mtdblock=$(get_mtdblock $partition)
+
+		echo "- Backup: $mtdblock to file $filename ---"
+		backup_partion_to_file $mtdblock /sdcard/$backup_dirname/$filename || { echo "Backup $partition partition $mtdblock to $filename failed" ; exit_init failed ; }
+	done
+	kill $blue_led_pid
+else
+	echo "backup_partitions value is No"
+fi
+
+
+##### RESTORE #####
+echo
+echo
+if [[ "$restore_partitions" == "yes" ]]; then
+	echo "restore_partitions value is Yes"
+
+	if [[ ! -d /sdcard/$restore_dirname ]]; then
+		{ echo "/sdcard/$restore_dirname directory is missing" ; exit_init failed ; }
+	else
+		echo "/sdcard/$restore_dirname directory is found"
+	fi
+
+	cp -r /sdcard/$restore_dirname /
+	cd /$restore_dirname
+
+	/blink_red_led.sh &
+	red_led_pid="$!"
+	echo
+	echo "---------- Begin of restore operations ----------"
+	for partition in kernel rootfs app kback aback cfg para; do
+		filename=$(get_filename $partition)
+		mtd=$(get_mtd $partition)
+		restore_opt_value=$(get_restore_opt_value $partition)
+
+		echo "- Restore: file $filename to $mtd"
+		if [[ "$restore_opt_value" == "yes" ]]; then
+			echo " + restore_$partition value is Yes"
+			restore_file_to_partition $filename $mtd || { echo "Restore $filename to $partition partition $mtd failed" ; exit_init failed ; }
+		else
+			echo " + restore_$partition value is No"
+		fi
+		echo
+	done
+	kill $red_led_pid
+else
+	echo "restore_partitions value is No"
+fi
+
+
+##### CUSTOM SCRIPT #####
+echo
+echo
+if [[ -f /sdcard/$custom_script ]]; then
+	echo "/sdcard/$custom_script is found"
+	if [[ "$dry_run" == "true" ]]; then
+		echo "Custom script is not run on dry mode"
+	else
+		/sdcard/$custom_script || { echo "Custom script did not run properly" ; exit_init failed ; }
+	fi
+else
+	echo "/sdcard/$custom_script is missing"
+fi
+
+exit_init succeeded
+
+
+
+
+
