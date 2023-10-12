@@ -9,7 +9,7 @@
 - Initramfs shell is available if you have serial connection
 
 ## Read this if this is your first time
-1. Download [lastest release](https://github.com/archandanime/wcv3_flasher-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
+1. Download [lastest release](https://github.com/archandanime/wcv3_flash-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
 2. Edit the config file `wcv3_flash-helper.conf` with:
 ```
 dry_run="yes"
@@ -23,7 +23,7 @@ custom_script=""
 6. Do Step 3 and 4, check your SD Card, there should be `wcv3_flash-helper_backup` directory. Copy it to a safe place in case you need for a rescue.
 
 ## Normal installation
-1. Download [lastest release](https://github.com/archandanime/wcv3_flasher-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
+1. Download [lastest release](https://github.com/archandanime/wcv3_flash-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
 2. Edit `wcv3_flash-helper.conf` with filenames of the partition images.
 3. Edit `wcv3_flash-helper.conf` to select partitions to be restored.
 4. Insert your SD Card to your camera and reboot.
