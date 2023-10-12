@@ -1,4 +1,4 @@
-## wcv3_flash-helper - Automatic parttion backup/restore for Wyze Cam v3
+## wcv3_flash-helper - Automatic parttion backup/restore tool for Wyze Cam v3
 
 ## Feature list
 - No serial connection or SSH is required, only with SD Card
