@@ -9,7 +9,7 @@
 - Initramfs shell is available if you have serial connection
 
 ## Read this if this is your first time
-1. Download [lastest release](https://github.com/archandanime/wcv3_flash-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
+1. Download [lastest release](https://github.com/archandanime/wcv3_flash-helper/releases) and extract `wcv3_flash-helper` directory and `factory_t31_ZMC6tiIDQN` to your SD Card.
 2. Edit the config file `wcv3_flash-helper.conf` with:
 ```
 dry_run="yes"
@@ -20,10 +20,10 @@ custom_script=""
 3. Insert your SD Card and power on your camera.
 4. Wait until the camera restart, turn it off, remove your SD Card and check `wcv3_flash-helper.log` if everything looks fine and there is no error.
 5. Edit `wcv3_flash-helper.conf` same as Step 1 but with `dry_run` option turned off.
-6. Do Step 3 and 4, check your SD Card, there should be `wcv3_flash-helper_backup` directory. Copy it to a safe place in case you need for a rescue.
+6. Do Step 3 and 4, check your SD Card, there should be `wcv3_flash-helper_backup` directory. Copy it to a safe place in case you need for a recovery.
 
 ## Normal installation
-1. Download [lastest release](https://github.com/archandanime/wcv3_flash-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
+1. Download [lastest release](https://github.com/archandanime/wcv3_flash-helper/releases) and extract `wcv3_flash-helper` directory and and `factory_t31_ZMC6tiIDQN` to your SD Card.
 2. Edit `wcv3_flash-helper.conf` with filenames of the partition images.
 3. Edit `wcv3_flash-helper.conf` to select partitions to be restored.
 4. Insert your SD Card to your camera and reboot.
@@ -33,7 +33,7 @@ custom_script=""
 - It is highly recommended to enable `dry_run` to check if everything works before doing real operations.
 - Backup is done first, then Restore and followed by Custom script.
 - Custom script is not run if `dry_run` is set to `yes`.
-- You can specify `continue_boot_img_filename` to get it renamed to `factory_t31_ZMC6tiIDQN` after all operations are finished.
+- You can specify `continue_boot_img_filename` option with a boot image to be booted on next boot, It will be renamed to `factory_t31_ZMC6tiIDQN` after all operations are finished.
 - Custom script does not neccessarily have to be on SD Card top directory, you can put its path on the option to make it run from somewhere else.
 - During backup operations, blue LED would be blinking. During restore operations, red LED would be blinking.
 
