@@ -23,7 +23,7 @@
 #restore_cfg="no"
 #restore_para="no"
 #
-#custom_script="/path-to/my_init_script.sh"
+#custom_script="/path-to/custom_script.sh"
 #
 #
 
