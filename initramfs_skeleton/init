@@ -156,28 +156,19 @@ function backup_partion_to_file() {
 		if [[ "$dry_run" == "yes" ]]; then
 			echo " + (this command is not run) dd if=$mtdblock of=$backup_file"
 			echo " + (this command is not run) md5sum $backup_file > $backup_file.md5sum"
-			
 		else
 			dd if=$mtdblock of=$backup_file || { echo " + Failed to back up $mtdblock" ; return 1 ; }
 			md5sum $backup_file > $backup_file.md5sum
 		fi
 	else
-		echo "$backup_file file already exists"
+		echo " + $backup_file file exists"
 	fi
+	echo
 }
 
 function exit_init() {
-# Syntax: exit_init <failed/succeeded>
-	case "$1" in
-		"failed")
-			echo "Renaming /sdcard/factory_t31_ZMC6tiIDQN to /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.failed"
-			mv /sdcard/factory_t31_ZMC6tiIDQN /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.failed
-			;;
-		"succeeded")
-			echo "Renaming /sdcard/factory_t31_ZMC6tiIDQN to /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.succeeded"
-			mv /sdcard/factory_t31_ZMC6tiIDQN /sdcard/factory_t31_ZMC6tiIDQN_$installer_name.succeeded
-			;;
-	esac
+	echo "Renaming /sdcard/factory_t31_ZMC6tiIDQN to /sdcard/factory_t31_ZMC6tiIDQN.$installer_name"
+	mv /sdcard/factory_t31_ZMC6tiIDQN /sdcard/factory_t31_ZMC6tiIDQN.$installer_name
 
 	if [[ -f /sdcard/$continue_boot_img_filename ]]; then
 		echo "Renaming /sdcard/$continue_boot_img_filename to /sdcard/factory_t31_ZMC6tiIDQN"
@@ -185,10 +176,11 @@ function exit_init() {
 	else
 		echo "/sdcard/$continue_boot_img_filename file is missing"
 	fi
-	
+
 	echo
 	echo "Initramfs init is finished! Exiting now"
 	[[ -f /tmp/initramfs.log ]] && cp /tmp/initramfs.log $log_file
+	[[ -f /tmp/initramfs_no-config-error.log ]] && cp /tmp/initramfs.log $log_file_fallback
 	sync
 	umount /sdcard
 	sleep 1
@@ -199,10 +191,13 @@ function exit_init() {
 
 
 installer_name="wcv3_flash-helper"
-backup_dirname="wcv3_flash-helper_backup"
-restore_dirname="wcv3_flash-helper_restore"
-config_file="/sdcard/wcv3_flash-helper.conf"
-log_file="/sdcard/wcv3_flash-helper.log"
+backup_dir_name="backup"
+backup_dir_path="/sdcard/wcv3_flash-helper/backup/"
+restore_dir_name="restore"
+restore_dir_path="/sdcard/wcv3_flash-helper/restore/"
+config_file="/sdcard/wcv3_flash-helper/wcv3_flash-helper.conf"
+log_file="/sdcard/wcv3_flash-helper/wcv3_flash-helper.log"
+log_file_fallback="/sdcard/wcv3_flash-helper_no-config-error.log"
 
 
 ##### DEBUG #####
@@ -228,13 +223,13 @@ echo "Welcome to $installer_name!"
 
 ##### CHECK FOR ERRORS #####
 if [[ ! -f $config_file ]]; then
-	{ echo "$config_file file is missing" ; exit_init failed ; }
+	{ echo "$config_file file is missing" ; mv /tmp/initramfs.log /tmp/initramfs_no-config-error.log ; exit_init ; }
 else
 	echo "$config_file file is found"
 fi
 
 dos2unix $config_file
-source $config_file || { echo "$config_file file is invalid" ; exit_init failed ; }
+source $config_file || { echo "$config_file file is invalid" ; exit_init ; }
 
 
 ##### BACKUP #####
@@ -247,12 +242,12 @@ if [[ "${backup_partitions}" == "yes" ]]; then
 	echo
 	echo "---------- Begin of backup operations ----------"
 	for partition in kernel rootfs app kback aback cfg para; do
-		[[ ! -d /sdcard/$backup_dirname ]] && mkdir /sdcard/$backup_dirname
+		[[ ! -d $backup_dir_path ]] && mkdir $backup_dir_path
 		filename=$(get_filename $partition)
 		mtdblock=$(get_mtdblock $partition)
 
 		echo "- Backup: $mtdblock to file $filename ---"
-		backup_partion_to_file $mtdblock /sdcard/$backup_dirname/$filename || { echo "Backup $partition partition $mtdblock to $filename failed" ; exit_init failed ; }
+		backup_partion_to_file $mtdblock $backup_dir_path/$filename || { echo "Backup $partition partition $mtdblock to $filename failed" ; exit_init ; }
 	done
 	kill $blue_led_pid
 else
@@ -266,14 +261,14 @@ echo
 if [[ "$restore_partitions" == "yes" ]]; then
 	echo "restore_partitions value is Yes"
 
-	if [[ ! -d /sdcard/$restore_dirname ]]; then
-		{ echo "/sdcard/$restore_dirname directory is missing" ; exit_init failed ; }
+	if [[ ! -d $restore_dir_path ]]; then
+		{ echo "$restore_dir_path directory is missing" ; exit_init ; }
 	else
-		echo "/sdcard/$restore_dirname directory is found"
+		echo "$restore_dir_path directory is found"
 	fi
 
-	cp -r /sdcard/$restore_dirname /
-	cd /$restore_dirname
+	cp -r $restore_dir_path /$restore_dir_name
+	cd /$restore_dir_name
 
 	/blink_red_led.sh &
 	red_led_pid="$!"
@@ -284,10 +279,11 @@ if [[ "$restore_partitions" == "yes" ]]; then
 		mtd=$(get_mtd $partition)
 		restore_opt_value=$(get_restore_opt_value $partition)
 
-		echo "- Restore: file $filename to $mtd"
+		echo "- Restore: $mtd from file $filename"
 		if [[ "$restore_opt_value" == "yes" ]]; then
+
 			echo " + restore_$partition value is Yes"
-			restore_file_to_partition $filename $mtd || { echo "Restore $filename to $partition partition $mtd failed" ; exit_init failed ; }
+			restore_file_to_partition $filename $mtd || { echo "Restore $filename to $partition partition $mtd failed" ; exit_init ; }
 		else
 			echo " + restore_$partition value is No"
 		fi
@@ -304,17 +300,16 @@ echo
 echo
 if [[ -f /sdcard/$custom_script ]]; then
 	echo "/sdcard/$custom_script is found"
-	if [[ "$dry_run" == "true" ]]; then
+	if [[ "$dry_run" == "yes" ]]; then
 		echo "Custom script is not run on dry mode"
 	else
-		/sdcard/$custom_script || { echo "Custom script did not run properly" ; exit_init failed ; }
+		/sdcard/$custom_script || { echo "Custom script did not run properly" ; exit_init ; }
 	fi
 else
 	echo "/sdcard/$custom_script is missing"
 fi
 
-exit_init succeeded
-
+exit_init
 
 
 
