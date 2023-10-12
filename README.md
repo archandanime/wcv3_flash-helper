@@ -4,7 +4,7 @@
 - No serial connection or SSH is required, only with SD Card
 - Custom filenames for backup/restore
 - Custom script to run after backup and restore
-- Dry mode for safety debugging
+- Dry mode for safety and debugging
 - Seamless transition to new boot image on SD Card after backup/restore
 - Initramfs shell is available if you have serial connection
 
@@ -24,10 +24,9 @@ custom_script=""
 
 ## Normal installation
 1. Download [lastest release](https://github.com/archandanime/wcv3_flasher-helper/releases) and extract `wcv3_flash-helper.conf` and `factory_t31_ZMC6tiIDQN` to your SD Card.
-2. Create `wcv3_flash-helper_restore` directory on your SD Card and place inside partition images that you want to restore.
-3. Edit `wcv3_flash-helper.conf` with filenames of the partition images.
-4. Edit `wcv3_flash-helper.conf` to select partitions to be restored.
-5. Insert your SD Card to your camera and reboot.
+2. Edit `wcv3_flash-helper.conf` with filenames of the partition images.
+3. Edit `wcv3_flash-helper.conf` to select partitions to be restored.
+4. Insert your SD Card to your camera and reboot.
 
 **Notes:**
 - You need md5sum files of the partition images that you want to restore in `<restore_partition>.ms5sum` format. Backup operations will automatically generate md5sum files.
