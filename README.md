@@ -4,7 +4,7 @@
 - No serial connection or SSH is required, only with SD Card
 - Custom filenames for backup/restore
 - Custom script to run after backup and restore
-- Dry mode for safety and debugging
+- Dry run option for safety and debugging
 - Seamless transition to new boot image on SD Card after backup/restore
 - Initramfs shell is available if you have serial connection
 
