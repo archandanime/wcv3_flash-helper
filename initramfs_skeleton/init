@@ -146,8 +146,8 @@ function restore_file_to_partition() {
 }
 
 
-function backup_partion_to_file() {
-# Syntax: backup_partion_to_file <mtdblock> <file>
+function backup_partition_to_file() {
+# Syntax: backup_partition_to_file <mtdblock> <file>
 	local mtdblock="$1"
 	local backup_file="$2"
 
@@ -247,7 +247,7 @@ if [[ "${backup_partitions}" == "yes" ]]; then
 		mtdblock=$(get_mtdblock $partition)
 
 		echo "- Backup: $mtdblock to file $filename ---"
-		backup_partion_to_file $mtdblock $backup_dir_path/$filename || { echo "Backup $partition partition $mtdblock to $filename failed" ; exit_init ; }
+		backup_partition_to_file $mtdblock $backup_dir_path/$filename || { echo "Backup $partition partition $mtdblock to $filename failed" ; exit_init ; }
 	done
 	kill $blue_led_pid
 else
