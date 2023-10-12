@@ -47,4 +47,4 @@ Dry run first is highly recommended, unless you are confident.
 
 ## Credits
 - Gtxaspec with his full-featured busybox from [his repo](https://github.com/gtxaspec/wz_mini_hacks)
-- Mnakada with his docker image to build the boot image from [their repo](https://github.com/mnakada/atomcam_tools)
+- Mnakada with their docker image to build the boot image from [their repo](https://github.com/mnakada/atomcam_tools)
