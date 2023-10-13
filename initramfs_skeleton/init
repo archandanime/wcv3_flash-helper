@@ -130,18 +130,31 @@ function get_restore_opt_value() {
 	esac
 }
 
+
+msg() {
+	message="$1"
+	echo "$message"
+	echo "$message" > /dev/console
+}
+
+msg_nonewline() {
+	message="$1"
+	echo -n "$message"
+	echo -n "$message" > /dev/console
+}
+
 function restore_file_to_partition() {
 # Syntax: restore_file_to_partition <file> <mtd>
 	local restore_file="$1"
 	local mtd="$2"
 
-	[[ ! -f $restore_file ]] && { echo " + $restore_file is missing" ; return 1 ; }
+	[[ ! -f $restore_file ]] && { msg " + $restore_file is missing" ; return 1 ; }
 	if [[ "$dry_run" == "yes" ]]; then
-		echo -n " + Checking md5 of $restore_file: "
-		md5sum -c $restore_file.md5sum && echo " + (this command is not run) flashcp $restore_file $mtd"
+		msg_nonewline " + Checking md5 of $restore_file: "
+		md5sum -c $restore_file.md5sum && msg " + (this command is not run) flashcp $restore_file $mtd"
 	else
-		echo -n " + Checking md5 of $restore_file: "
-		md5sum -c $restore_file.md5sum && flashcp $restore_file $mtd || { echo " + md5 checksum for $restore_file failed" ; return 1 ; }
+		msg_nonewline " + Checking md5 of $restore_file: "
+		md5sum -c $restore_file.md5sum && flashcp $restore_file $mtd || { msg " + md5 checksum for $restore_file failed" ; return 1 ; }
 	fi
 }
 
@@ -152,33 +165,33 @@ function backup_partition_to_file() {
 	local backup_file="$2"
 
 	if [[ ! -f $backup_file ]]; then
-		echo " + Making backup for $partition partition"
+		msg " + Making backup for $partition partition"
 		if [[ "$dry_run" == "yes" ]]; then
-			echo " + (this command is not run) dd if=$mtdblock of=$backup_file"
-			echo " + (this command is not run) md5sum $backup_file > $backup_file.md5sum"
+			msg " + (this command is not run) dd if=$mtdblock of=$backup_file"
+			msg " + (this command is not run) md5sum $backup_file > $backup_file.md5sum"
 		else
-			dd if=$mtdblock of=$backup_file || { echo " + Failed to back up $mtdblock" ; return 1 ; }
+			dd if=$mtdblock of=$backup_file || { msg " + Failed to back up $mtdblock" ; return 1 ; }
 			md5sum $backup_file > $backup_file.md5sum
 		fi
 	else
-		echo " + $backup_file file exists"
+		msg " + $backup_file file exists"
 	fi
-	echo
+	msg
 }
 
 function exit_init() {
-	echo "Renaming /sdcard/factory_t31_ZMC6tiIDQN to /sdcard/factory_t31_ZMC6tiIDQN.$installer_name"
+	msg "Renaming /sdcard/factory_t31_ZMC6tiIDQN to /sdcard/factory_t31_ZMC6tiIDQN.$installer_name"
 	mv /sdcard/factory_t31_ZMC6tiIDQN /sdcard/factory_t31_ZMC6tiIDQN.$installer_name
 
 	if [[ -f /sdcard/$continue_boot_img_filename ]]; then
-		echo "Renaming /sdcard/$continue_boot_img_filename to /sdcard/factory_t31_ZMC6tiIDQN"
+		msg "Renaming /sdcard/$continue_boot_img_filename to /sdcard/factory_t31_ZMC6tiIDQN"
 		mv /sdcard/$continue_boot_img_filename /sdcard/factory_t31_ZMC6tiIDQN
 	else
-		echo "/sdcard/$continue_boot_img_filename file is missing"
+		msg "/sdcard/$continue_boot_img_filename file is missing"
 	fi
 
-	echo
-	echo "Initramfs init is finished! Exiting now"
+	msg
+	msg "Initramfs init is finished! Exiting now"
 	[[ -f /tmp/initramfs.log ]] && cp /tmp/initramfs.log $log_file
 	[[ -f /tmp/initramfs_no-config-error.log ]] && cp /tmp/initramfs.log $log_file_fallback
 	sync
@@ -201,11 +214,11 @@ log_file_fallback="/sdcard/wcv3_flash-helper_no-config-error.log"
 
 
 ##### DEBUG #####
-echo
-echo
+msg
+msg
 echo "Press any key to interupt init" > /dev/console
-echo
-echo
+msg
+msg
 exec 0< /dev/console
 read -r -s -n 1 -t 3
 if [[ "$?" -eq 0 ]]; then
@@ -215,57 +228,56 @@ if [[ "$?" -eq 0 ]]; then
 	exec /bin/sh
 fi
 echo "Selection has timed out" > /dev/console
-echo
-echo
-echo
-echo "Welcome to $installer_name!"
+msg
+msg
+msg
+msg "Welcome to $installer_name!"
 
 
 ##### CHECK FOR ERRORS #####
 if [[ ! -f $config_file ]]; then
-	{ echo "$config_file file is missing" ; mv /tmp/initramfs.log /tmp/initramfs_no-config-error.log ; exit_init ; }
+	{ msg "$config_file file is missing" ; mv /tmp/initramfs.log /tmp/initramfs_no-config-error.log ; exit_init ; }
 else
-	echo "$config_file file is found"
+	msg "$config_file file is found"
 fi
 
 dos2unix $config_file
-source $config_file || { echo "$config_file file is invalid" ; exit_init ; }
+source $config_file || { msg "$config_file file is invalid" ; exit_init ; }
 
 
 ##### BACKUP #####
-echo
-echo
+msg
+msg
 if [[ "${backup_partitions}" == "yes" ]]; then
-	echo "backup_partitions value is Yes"
+	msg "backup_partitions value is Yes"
 	/blink_blue_led.sh &
 	blue_led_pid="$!"
-	echo
-	echo "Backup operations are going on" > /dev/console
-	echo "---------- Begin of backup operations ----------"
+	msg
+	msg "---------- Begin of backup operations ----------"
 	for partition in kernel rootfs app kback aback cfg para; do
 		[[ ! -d $backup_dir_path ]] && mkdir $backup_dir_path
 		filename=$(get_filename $partition)
 		mtdblock=$(get_mtdblock $partition)
 
-		echo "- Backup: $mtdblock to file $filename ---"
-		backup_partition_to_file $mtdblock $backup_dir_path/$filename || { echo "Backup $partition partition $mtdblock to $filename failed" ; exit_init ; }
+		msg "- Backup: $mtdblock to file $filename ---"
+		backup_partition_to_file $mtdblock $backup_dir_path/$filename || { msg "Backup $partition partition $mtdblock to $filename failed" ; exit_init ; }
 	done
 	kill $blue_led_pid
 else
-	echo "backup_partitions value is No"
+	msg "backup_partitions value is No"
 fi
 
 
 ##### RESTORE #####
-echo
-echo
+msg
+msg
 if [[ "$restore_partitions" == "yes" ]]; then
-	echo "restore_partitions value is Yes"
+	msg "restore_partitions value is Yes"
 
 	if [[ ! -d $restore_dir_path ]]; then
-		{ echo "$restore_dir_path directory is missing" ; exit_init ; }
+		{ msg "$restore_dir_path directory is missing" ; exit_init ; }
 	else
-		echo "$restore_dir_path directory is found"
+		msg "$restore_dir_path directory is found"
 	fi
 
 	cp -r $restore_dir_path /$restore_dir_name
@@ -273,46 +285,43 @@ if [[ "$restore_partitions" == "yes" ]]; then
 
 	/blink_red_led.sh &
 	red_led_pid="$!"
-	echo
-	echo "Restore operations are going on" > /dev/console
-	echo "---------- Begin of restore operations ----------"
+	msg
+	msg "---------- Begin of restore operations ----------"
 	for partition in kernel rootfs app kback aback cfg para; do
 		filename=$(get_filename $partition)
 		mtd=$(get_mtd $partition)
 		restore_opt_value=$(get_restore_opt_value $partition)
 
-		echo "- Restore: $mtd from file $filename"
+		msg "- Restore: $mtd from file $filename"
 		if [[ "$restore_opt_value" == "yes" ]]; then
 
-			echo " + restore_$partition value is Yes"
-			restore_file_to_partition $filename $mtd || { echo "Restore $filename to $partition partition $mtd failed" ; exit_init ; }
+			msg " + restore_$partition value is Yes"
+			restore_file_to_partition $filename $mtd || { msg "Restore $filename to $partition partition $mtd failed" ; exit_init ; }
 		else
-			echo " + restore_$partition value is No"
+			msg " + restore_$partition value is No"
 		fi
-		echo
+		msg
 	done
 	kill $red_led_pid
 else
-	echo "restore_partitions value is No"
+	msg "restore_partitions value is No"
 fi
 
 
 ##### CUSTOM SCRIPT #####
-echo
-echo
+msg
+msg
+msg "custom_script is set to \"$custom_script\""
 if [[ -f /sdcard/$custom_script ]]; then
-	echo "/sdcard/$custom_script is found"
+	msg "Custom script is found"
 	if [[ "$dry_run" == "yes" ]]; then
-		echo "Custom script is not run on dry mode"
+		msg "Custom script does not run when dry mode is active"
 	else
-		echo "Custom script is being executed" > /dev/console
-		/sdcard/$custom_script || { echo "Custom script did not run properly" ; exit_init ; }
+		msg "Executing custom script"
+		/sdcard/$custom_script || { msg "Custom script did not run properly" ; exit_init ; }
 	fi
 else
-	echo "/sdcard/$custom_script is missing"
+	msg "Custom script is missing"
 fi
 
 exit_init
-
-
-
