@@ -23,7 +23,7 @@
 #restore_cfg="no"
 #restore_para="no"
 #
-#custom_script="/path-to/custom_script.sh"
+#custom_script="/path-to/custom-script.sh"
 #
 #
 
@@ -240,6 +240,7 @@ if [[ "${backup_partitions}" == "yes" ]]; then
 	/blink_blue_led.sh &
 	blue_led_pid="$!"
 	echo
+	echo "Backup operations are going on" > /dev/console
 	echo "---------- Begin of backup operations ----------"
 	for partition in kernel rootfs app kback aback cfg para; do
 		[[ ! -d $backup_dir_path ]] && mkdir $backup_dir_path
@@ -273,6 +274,7 @@ if [[ "$restore_partitions" == "yes" ]]; then
 	/blink_red_led.sh &
 	red_led_pid="$!"
 	echo
+	echo "Restore operations are going on" > /dev/console
 	echo "---------- Begin of restore operations ----------"
 	for partition in kernel rootfs app kback aback cfg para; do
 		filename=$(get_filename $partition)
@@ -303,6 +305,7 @@ if [[ -f /sdcard/$custom_script ]]; then
 	if [[ "$dry_run" == "yes" ]]; then
 		echo "Custom script is not run on dry mode"
 	else
+		echo "Custom script is being executed" > /dev/console
 		/sdcard/$custom_script || { echo "Custom script did not run properly" ; exit_init ; }
 	fi
 else
@@ -310,7 +313,6 @@ else
 fi
 
 exit_init
-
 
 
 
