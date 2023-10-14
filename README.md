@@ -1,7 +1,11 @@
 ## wcv3_flash-helper - Automatic partition backup/restore tool for Wyze Cam v3
 
 ## Feature list
-- No serial connection or SSH is required, only with SD card.- Custom filenames for backup/restore.- Custom script to run after backup/restore.- Dry run option for safety and debugging.- Seamless transition to a new boot image on SD card after backup/restore.- Initramfs shell is available if you have a serial connection.
+- No serial connection or SSH is required, only with SD card.
+- Custom filenames for backup/restore.- Custom script to run after backup/restore.
+- Dry run option for safety and debugging.
+- Seamless transition to a new boot image on SD card after backup/restore.
+- Initramfs shell is available if you have a serial connection.
 
 ## How to backup your partitions - Read this if this is your first use
 1. Download [lastest release](https://github.com/archandanime/wcv3_flash-helper/releases/latest) then extract the `wcv3_flash-helper` directory and `factory_t31_ZMC6tiIDQN` to your SD card.
