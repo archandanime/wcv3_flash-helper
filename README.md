@@ -26,7 +26,12 @@ You can write a script and specify it in the `wcv3_flash-helper.conf` file with 
 ## Specify the boot image on the SD card that will be used on the next boot
 If you are using wz_mini_hacks, you can rename wz_mini's boot image to `factory_t31_ZMC6tiIDQN.wz_mini` and specify that file name with the `continue_boot_img_filename` option. After wcv3_flash-helper finishes its operations, this file will be renamed back to `factory_t31_ZMC6tiIDQN` to allow the boot image to be booted on the next boot without having to pull the SD card and rename it manually. Seamless transition!
 
-**Notes:**- You need md5sum files of the partition images that you want to restore in `<restore_partition>.ms5sum` format. Backup operations will automatically generate md5sum files.- It is highly recommended to enable `dry_run` to check if everything works before doing real operations.- Backup is done first, then Restore and followed by Custom script.- Custom script is not run if `dry_run` is set to `yes`.- Custom script does not necessarily have to be on the SD Card top directory, you can put its path on the option to make it run from somewhere else.- During backup operations, the blue LED would be blinking. During restore operations, the red LED would be blinking.
+**Notes:**
+- You need md5sum files of the partition images that you want to restore in `<restore_partition>.ms5sum` format. Backup operations will automatically generate md5sum files.
+- It is highly recommended to enable `dry_run` to check if everything works before doing real operations.
+- Backup is done first, then Restore and followed by Custom script.
+- Custom script is not run if `dry_run` is set to `yes`.- Custom script does not necessarily have to be on the SD Card top directory, you can put its path on the option to make it run from somewhere else.
+- During backup operations, the blue LED would be blinking. During restore operations, the red LED would be blinking.
 
 ## Warning
 ```
