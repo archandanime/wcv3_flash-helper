@@ -14,7 +14,8 @@
 ```
 dry_run="yes"
 backup_partitions="yes"
-restore_partitions="no"custom_script=""
+restore_partitions="no"
+custom_script=""
 ```
 3. Insert your SD card and power on your camera.
 4. Wait for the camera to restart after wcv3_flasher-helper finishes its operations. Then turn the off camera, remove your SD card, and check `wcv3_flash-helper.log` on your SD card to see if everything looks fine and there is no error.
