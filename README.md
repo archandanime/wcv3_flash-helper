@@ -1,4 +1,4 @@
-## This program is abandonned, please use [wz_flash-helper](https://github.com/archandanime/wz_flash-helper) instead
+## This program is no longer maintained. Please use [wz_flash-helper](https://github.com/archandanime/wz_flash-helper) instead
 
 ## Feature list
 - No serial connection or SSH is required, only with SD card.
