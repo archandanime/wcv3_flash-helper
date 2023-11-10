@@ -1,4 +1,4 @@
-## wcv3_flash-helper - Automatic partition backup/restore tool for Wyze Cam v3
+## This program is abandonned, please use [wz_flash-helper](https://github.com/archandanime/wz_flash-helper) instead
 
 ## Feature list
 - No serial connection or SSH is required, only with SD card.
